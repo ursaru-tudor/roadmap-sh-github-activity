@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 )
@@ -54,7 +55,7 @@ func getJSON(username string) []byte {
 type GHResponse struct {
 	Id      string `json:"id"`
 	Type    string `json:"type"`
-	Payload *struct {
+	Payload struct {
 		Action       string `json:"action"`
 		Size         int    `json:"size"`
 		DistinctSize int    `distinct_size:"distinct_size"`
@@ -63,6 +64,12 @@ type GHResponse struct {
 			Message string `json:"message"`
 			URL     string `json:"url"`
 		} `json:"commits"`
+		PullRequest struct {
+			Title string `json:"title"`
+		} `json:"pull_request"`
+		Issue struct {
+			Title string `json:"title"`
+		} `json:"issue"`
 	} `json:"payload"`
 	Repo *struct {
 		Name string `json:"name"`
@@ -83,10 +90,27 @@ func (r GHResponse) Describe() string {
 		}
 	case "PublicEvent":
 		return fmt.Sprintf("Made the repo %s public", r.Repo.Name)
+	case "PullRequestEvent":
+		if r.Payload.Action == "opened" {
+			return fmt.Sprintf("Opened pull request \"%s\" in repo %s", r.Payload.PullRequest.Title, r.Repo.Name)
+		} else if r.Payload.Action == "closed" {
+			return fmt.Sprintf("Closed pull request \"%s\" in repo %s", r.Payload.PullRequest.Title, r.Repo.Name)
+		}
+	case "IssuesEvent":
+		if r.Payload.Action == "opened" {
+			return fmt.Sprintf("Opened issue \"%s\" in repo %s", r.Payload.Issue.Title, r.Repo.Name)
+		} else if r.Payload.Action == "closed" {
+			return fmt.Sprintf("Closed issue \"%s\" in repo %s", r.Payload.Issue.Title, r.Repo.Name)
+		}
+	case "IssueCommentEvent":
+		return fmt.Sprintf("Commented on issue \"%s\" in repo %s", r.Payload.Issue.Title, r.Repo.Name)
+	case "CreateEvent":
+		return fmt.Sprintf("Created repo %s", r.Repo.Name)
 	default:
 		fmt.Printf("This event has an invalid type (the creator of this app didn't properly understand the API response schema. Please report this on github)\n")
-		return ""
+		log.Printf("Unknown event type %s\n", r.Type)
 	}
+	return ""
 }
 
 func main() {
