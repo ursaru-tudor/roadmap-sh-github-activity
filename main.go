@@ -4,8 +4,8 @@ import (
 	"bufio"
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 )
@@ -23,7 +23,6 @@ func getAPIURL(username string) string {
 
 func getJSON(username string) []byte {
 	url := getAPIURL(username)
-	log.Printf("Downloading from %s\n", url)
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -33,6 +32,10 @@ func getJSON(username string) []byte {
 	defer resp.Body.Close()
 
 	fmt.Println("Response status:", resp.Status)
+	if resp.StatusCode != 200 {
+		fmt.Printf("Could not access user events.\n")
+		panic(errors.New("bad HTTP response code"))
+	}
 
 	scanner := bufio.NewScanner(resp.Body)
 	var buf []byte
@@ -48,7 +51,7 @@ func getJSON(username string) []byte {
 	return data
 }
 
-type Response struct {
+type GHResponse struct {
 	Id      string `json:"id"`
 	Type    string `json:"type"`
 	Payload *struct {
@@ -65,6 +68,25 @@ type Response struct {
 		Name string `json:"name"`
 	} `json:"repo"`
 	When string `json:"created_at"`
+}
+
+// Describes a GHResponse with a short line of text
+func (r GHResponse) Describe() string {
+	switch r.Type {
+	case "PushEvent":
+		return fmt.Sprintf("Pushed %d commits to %s", r.Payload.Size, r.Repo.Name)
+	case "WatchEvent":
+		if r.Payload.Action == "started" {
+			return fmt.Sprintf("Is now watching %s", r.Repo.Name)
+		} else {
+			return fmt.Sprintf("Stopped watching %s", r.Repo.Name) //?
+		}
+	case "PublicEvent":
+		return fmt.Sprintf("Made the repo %s public", r.Repo.Name)
+	default:
+		fmt.Printf("This event has an invalid type (the creator of this app didn't properly understand the API response schema. Please report this on github)\n")
+		return ""
+	}
 }
 
 func main() {
@@ -84,7 +106,7 @@ func main() {
 	defer jsonFile.Close()
 	jsonFile.Write(jsonData)
 
-	var GitHubEvents []Response
+	var GitHubEvents []GHResponse
 	json.Unmarshal(jsonData, &GitHubEvents)
 	newData, _ := json.MarshalIndent(GitHubEvents, "", " ")
 
@@ -94,4 +116,10 @@ func main() {
 	}
 	defer newFile.Close()
 	newFile.Write(newData)
+
+	for _, ghr := range GitHubEvents {
+		if ghr.Describe() != "" {
+			fmt.Printf(" - %s\n", ghr.Describe())
+		}
+	}
 }
