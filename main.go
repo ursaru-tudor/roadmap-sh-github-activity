@@ -31,8 +31,8 @@ func getJSON(username string) []byte {
 
 	defer resp.Body.Close()
 
-	fmt.Println("Response status:", resp.Status)
 	if resp.StatusCode != 200 {
+		fmt.Printf("Response status: %v", resp.Status)
 		fmt.Printf("Could not access user events.\n")
 		panic(errors.New("bad HTTP response code"))
 	}
@@ -98,24 +98,10 @@ func main() {
 	argument := os.Args[1]
 	jsonData := getJSON(argument)
 
-	jsonFile, err := os.Create("github.json")
-	if err != nil {
-		panic(err)
-	}
-
-	defer jsonFile.Close()
-	jsonFile.Write(jsonData)
-
 	var GitHubEvents []GHResponse
 	json.Unmarshal(jsonData, &GitHubEvents)
-	newData, _ := json.MarshalIndent(GitHubEvents, "", " ")
 
-	newFile, err := os.Create("ngithub.json")
-	if err != nil {
-		panic(err)
-	}
-	defer newFile.Close()
-	newFile.Write(newData)
+	fmt.Printf("Recent activity of %s\n", argument)
 
 	for _, ghr := range GitHubEvents {
 		if ghr.Describe() != "" {
