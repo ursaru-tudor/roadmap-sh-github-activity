@@ -1,0 +1,2 @@
+To use command, please provide a github username. Like so
+github-activity <username>
