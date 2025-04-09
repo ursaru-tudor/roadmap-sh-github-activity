@@ -1,6 +1,10 @@
-For https://roadmap.sh/projects/github-user-activity
+# github-activity
 
-# Usage
+See recent activity of a github user
+
+Designed for https://roadmap.sh/projects/github-user-activity
+
+## Usage
 
 Simply run
 
