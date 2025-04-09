@@ -18,3 +18,24 @@ Simply run
 github-activity <username>
 ```
 To get a short description of the user's recent public activity
+
+## Example
+
+Running 
+```
+$ github-activity ursaru-tudor
+```
+
+May output
+
+```
+Recent activity of ursaru-tudor
+ - Pushed 1 commits to ursaru-tudor/roadmap-sh-github-activity
+ - Made the repo ursaru-tudor/task-cli public
+ - Pushed 4 commits to ursaru-tudor/roadmap-sh-github-activity
+ - Pushed 1 commits to ursaru-tudor/task-cli
+ - Pushed 1 commits to ursaru-tudor/task-cli
+ - Pushed 2 commits to ursaru-tudor/task-cli
+ - Is now watching golang/go
+ - Made the repo ursaru-tudor/task-cli public
+```
